@@ -135,7 +135,8 @@ function loadJackettSettings() {
 
         $("#jackett-flaresolverrurl").val(data.flaresolverrurl);
         $("#jackett-flaresolverr-maxtimeout").val(data.flaresolverr_maxtimeout);
-        $("#jackett-flaresolverr-concurrency").val(data.flaresolverr_max_concurrency || data.flaresolverrmaxconcurrency || 10);
+        var storedConc = data.flaresolverr_max_concurrency || data.flaresolverrmaxconcurrency || localStorage.getItem('jackett_flaresolverr_concurrency') || 10;
+        $("#jackett-flaresolverr-concurrency").val(storedConc);
         $("#jackett-omdbkey").val(data.omdbkey);
         $("#jackett-omdburl").val(data.omdburl);
         var password = data.password;
@@ -1642,6 +1643,7 @@ function bindUIButtons() {
         var jackett_flaresolverr_url = $("#jackett-flaresolverrurl").val();
         var jackett_flaresolverr_maxtimeout = $("#jackett-flaresolverr-maxtimeout").val();
         var jackett_flaresolverr_concurrency = parseInt($("#jackett-flaresolverr-concurrency").val()) || 10;
+        localStorage.setItem('jackett_flaresolverr_concurrency', jackett_flaresolverr_concurrency);
         var jackett_omdb_key = $("#jackett-omdbkey").val();
         var jackett_omdb_url = $("#jackett-omdburl").val();
 
