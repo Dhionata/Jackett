@@ -6,6 +6,8 @@ language: th-TH
 type: private
 encoding: UTF-8
 links:
+  - http://dedbit-new.dedbit.com/
+legacylinks:
   - https://www.dedbit.com/
 
 caps:
@@ -84,7 +86,7 @@ login:
     - selector: td.embedded:contains("Login failed!")
   test:
     path: my.php
-    selector: a[href="logout.php"]
+    selector: form[action="logout.php"]
 
 search:
   paths:
