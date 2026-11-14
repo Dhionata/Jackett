@@ -8,7 +8,11 @@ title Atualizador Unificado: Byparr + Jackett
 net session >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo Solicitando privilegios de administrador para atualizar Jackett e Byparr...
-    powershell -NoProfile -Command "Start-Process '%~dpnx0' -Verb RunAs"
+    if "%~1"=="" (
+        powershell -NoProfile -Command "Start-Process '%~dpnx0' -Verb RunAs"
+    ) else (
+        powershell -NoProfile -Command "Start-Process '%~dpnx0' -ArgumentList '%*' -Verb RunAs"
+    )
     exit /b
 )
 
@@ -19,26 +23,28 @@ echo.
 
 :: 1. Executa o atualizador do Byparr
 echo ========================================================
-echo >>> ETAPA 1: ATUALIZANDO BYPARR...
+echo [ETAPA 1/2] ATUALIZANDO BYPARR...
 echo ========================================================
 call "C:\Program Files\byparr\atualizar_byparr.bat" --no-pause
-if %ERRORLEVEL% neq 0 (
+set EXIT_CODE=!ERRORLEVEL!
+if !EXIT_CODE! neq 0 (
     echo.
-    echo [ERRO] A atualizacao do Byparr encerrou com falha (codigo %ERRORLEVEL%).
-    pause
-    exit /b %ERRORLEVEL%
+    echo [ERRO] A atualizacao do Byparr encerrou com falha - codigo !EXIT_CODE!.
+    if "%~1"=="" pause
+    exit /b !EXIT_CODE!
 )
 
 echo.
 echo ========================================================
-echo >>> ETAPA 2: ATUALIZANDO JACKETT...
+echo [ETAPA 2/2] ATUALIZANDO JACKETT...
 echo ========================================================
 call "C:\Users\xiyun\repos\Jackett\atualizar_jackett.bat" --no-pause
-if %ERRORLEVEL% neq 0 (
+set EXIT_CODE=!ERRORLEVEL!
+if !EXIT_CODE! neq 0 (
     echo.
-    echo [ERRO] A atualizacao do Jackett encerrou com falha (codigo %ERRORLEVEL%).
-    pause
-    exit /b %ERRORLEVEL%
+    echo [ERRO] A atualizacao do Jackett encerrou com falha - codigo !EXIT_CODE!.
+    if "%~1"=="" pause
+    exit /b !EXIT_CODE!
 )
 
 echo.
@@ -55,4 +61,5 @@ echo Ambos os servicos foram atualizados, sincronizados com seus
 echo respectivos repositorios no GitHub e reiniciados com sucesso!
 echo ========================================================
 echo.
-pause
+if "%~1"=="" pause
+exit /b 0

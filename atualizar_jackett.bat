@@ -10,7 +10,11 @@ title Atualizador do Jackett (Custom Concurrency)
 net session >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo Solicitando privilegios de Administrador para gerenciar o servico do Jackett...
-    powershell -NoProfile -Command "Start-Process '%~dpnx0' -ArgumentList '%*' -Verb RunAs"
+    if "%~1"=="" (
+        powershell -NoProfile -Command "Start-Process '%~dpnx0' -Verb RunAs"
+    ) else (
+        powershell -NoProfile -Command "Start-Process '%~dpnx0' -ArgumentList '%*' -Verb RunAs"
+    )
     exit /b
 )
 
@@ -78,18 +82,34 @@ timeout /t 3 /nobreak >nul
 :: 4. Substituicao dos Binarios e Arquivos WebUI
 :: ========================================================
 echo.
-echo [6/6] Copiando binarios e arquivos da WebUI...
-copy /Y "C:\Users\xiyun\repos\Jackett\build_output\Jackett.Common.dll" "C:\ProgramData\Jackett\Jackett.Common.dll" >nul
-if %ERRORLEVEL% neq 0 (
-    echo [AVISO] Tentando liberar processo residual travando Jackett.Common.dll...
-    powershell -NoProfile -Command "Stop-Process -Name Jackett*, jackett* -Force -ErrorAction SilentlyContinue"
-    timeout /t 2 /nobreak >nul
-    copy /Y "C:\Users\xiyun\repos\Jackett\build_output\Jackett.Common.dll" "C:\ProgramData\Jackett\Jackett.Common.dll"
+echo [6/6] Copiando binarios, dependencias e arquivos da WebUI...
+set BUILD_DIR=C:\Users\xiyun\repos\Jackett\build_output
+set DEST_DIR=C:\ProgramData\Jackett
+set FLARESOLVERR_DLL=C:\Users\xiyun\repos\FlareSolverrSharp\src\FlareSolverrSharp\bin\Release\netstandard1.3\FlareSolverrSharp.dll
+
+for %%F in (Jackett.Common.dll JackettConsole.dll AngleSharp.dll AngleSharp.Xml.dll Polly.dll Polly.Core.dll DateTimeRoutines.dll YamlDotNet.dll) do (
+    if exist "!BUILD_DIR!\%%F" (
+        call :CopyWithFallback "!BUILD_DIR!\%%F" "!DEST_DIR!\%%F"
+        if !ERRORLEVEL! neq 0 (
+            echo [ERRO] Falha ao copiar %%F para !DEST_DIR!.
+            if "%~1"=="" pause
+            exit /b 1
+        )
+    )
 )
-copy /Y "C:\Users\xiyun\repos\Jackett\build_output\JackettConsole.dll" "C:\ProgramData\Jackett\JackettConsole.dll" >nul
-copy /Y "C:\Users\xiyun\repos\Jackett\src\Jackett.Common\Content\custom.js" "C:\ProgramData\Jackett\Content\custom.js" >nul
-copy /Y "C:\Users\xiyun\repos\Jackett\src\Jackett.Common\Content\index.html" "C:\ProgramData\Jackett\Content\index.html" >nul
-copy /Y "%~dpnx0" "C:\ProgramData\Jackett\atualizar_jackett.bat" >nul 2>&1
+
+if exist "!FLARESOLVERR_DLL!" (
+    call :CopyWithFallback "!FLARESOLVERR_DLL!" "!DEST_DIR!\FlareSolverrSharp.dll"
+    if !ERRORLEVEL! neq 0 (
+        echo [ERRO] Falha ao copiar FlareSolverrSharp.dll para !DEST_DIR!.
+        if "%~1"=="" pause
+        exit /b 1
+    )
+)
+
+copy /Y "C:\Users\xiyun\repos\Jackett\src\Jackett.Common\Content\custom.js" "!DEST_DIR!\Content\custom.js" >nul
+copy /Y "C:\Users\xiyun\repos\Jackett\src\Jackett.Common\Content\index.html" "!DEST_DIR!\Content\index.html" >nul
+if /I not "%~dpnx0"=="!DEST_DIR!\atualizar_jackett.bat" copy /Y "%~dpnx0" "!DEST_DIR!\atualizar_jackett.bat" >nul 2>&1
 
 :: ========================================================
 :: 5. Reinicializacao do Servico e Aplicacao de Bandeja
@@ -119,3 +139,18 @@ echo           Jackett atualizado com sucesso!
 echo ========================================================
 echo.
 if "%~1"=="" pause
+exit /b 0
+
+:CopyWithFallback
+set "SRC_FILE=%~1"
+set "DST_FILE=%~2"
+copy /Y "%SRC_FILE%" "%DST_FILE%" >nul 2>&1
+if %ERRORLEVEL% equ 0 exit /b 0
+
+echo [AVISO] Lock detectado em %~nx2. Tentando liberar e renomear para .old...
+powershell -NoProfile -Command "Stop-Process -Name Jackett*, jackett* -Force -ErrorAction SilentlyContinue" >nul 2>&1
+timeout /t 2 /nobreak >nul
+del /F /Q "%DST_FILE%.old" >nul 2>&1
+if exist "%DST_FILE%" move /Y "%DST_FILE%" "%DST_FILE%.old" >nul 2>&1
+copy /Y "%SRC_FILE%" "%DST_FILE%" >nul 2>&1
+exit /b %ERRORLEVEL%
