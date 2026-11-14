@@ -130,8 +130,8 @@ echo.
 echo Validando servicos e comunicacao...
 powershell -NoProfile -Command ^
     "$jackettOk = $false; for ($i=0; $i -lt 5; $i++) { try { $r = Invoke-WebRequest -Uri 'http://127.0.0.1:9117/UI/Dashboard' -UseBasicParsing -TimeoutSec 2; if ($r.StatusCode -eq 200) { $jackettOk = $true; break } } catch { Start-Sleep -Seconds 1 } }; " ^
-    "if ($jackettOk) { Write-Host '[OK] Jackett esta ativo e respondendo na porta 9117!' -ForegroundColor Green } else { Write-Host '[AVISO] Jackett ainda esta inicializando na porta 9117.' -ForegroundColor Yellow }; " ^
-    "try { $byparr = Invoke-RestMethod -Uri 'http://127.0.0.1:8191/config' -TimeoutSec 3; Write-Host ('[OK] Byparr (FlareSolverr) conectado na porta 8191! Concorrencia: ' + $byparr.maxConcurrency) -ForegroundColor Green } catch { Write-Host '[AVISO] Byparr nao respondeu na porta 8191. Verifique se o Byparr esta em execucao.' -ForegroundColor Yellow }"
+    "if ($jackettOk) { Write-Host '[OK] Jackett esta ativo e respondendo na porta 9117.' -ForegroundColor Green } else { Write-Host '[AVISO] Jackett ainda esta inicializando na porta 9117.' -ForegroundColor Yellow }; " ^
+    "try { $byparr = Invoke-RestMethod -Uri 'http://127.0.0.1:8191/config' -TimeoutSec 3; Write-Host ('[OK] Byparr (FlareSolverr) conectado na porta 8191. Concorrencia: ' + $byparr.maxConcurrency) -ForegroundColor Green } catch { Write-Host '[AVISO] Byparr nao respondeu na porta 8191. Verifique se o Byparr esta em execucao.' -ForegroundColor Yellow }"
 
 echo.
 echo ========================================================
